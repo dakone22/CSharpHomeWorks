@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DZ1", "DZ1\DZ1.csproj", "{0DEE2414-E42A-4271-851A-6031F6E98D12}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DZ1.Test", "DZ1.Test\DZ1.Test.csproj", "{6E57C025-BC0F-4DD7-A62E-E305E02ADF4D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0DEE2414-E42A-4271-851A-6031F6E98D12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DEE2414-E42A-4271-851A-6031F6E98D12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DEE2414-E42A-4271-851A-6031F6E98D12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DEE2414-E42A-4271-851A-6031F6E98D12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E57C025-BC0F-4DD7-A62E-E305E02ADF4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E57C025-BC0F-4DD7-A62E-E305E02ADF4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E57C025-BC0F-4DD7-A62E-E305E02ADF4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E57C025-BC0F-4DD7-A62E-E305E02ADF4D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
