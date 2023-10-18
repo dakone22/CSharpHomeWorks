@@ -4,37 +4,73 @@ namespace DZ1;
 
 using State = OperatorType;
 
+/// <summary>
+/// Interface for a calculator.
+/// </summary>
 public interface ICalculator
 {
+    /// <summary>
+    /// Calculates the result of an expression.
+    /// </summary>
+    /// <param name="expression">The expression to be calculated.</param>
+    /// <returns>The result of the calculation.</returns>
     double Calculate(string expression);
 }
 
+/// <summary>
+/// Base class for tokenized calculators.
+/// </summary>
 public abstract class TokenizedCalculator : ICalculator
 {
     private readonly ITokenizer _tokenizer;
+
+    /// <summary>
+    /// Initializes a new instance of the TokenizedCalculator class.
+    /// </summary>
+    /// <param name="tokenizer">The tokenizer to be used for tokenization.</param>
     protected TokenizedCalculator(ITokenizer tokenizer) => _tokenizer = tokenizer;
 
+    /// <inheritdoc/>
     public double Calculate(string expression) => ProcessTokens(_tokenizer.Tokenize(expression));
 
+    /// <summary>
+    /// Process an array of tokens to calculate the result.
+    /// </summary>
+    /// <param name="tokenArray">An array of tokens to be processed.</param>
+    /// <returns>The result of the calculation.</returns>
     protected abstract double ProcessTokens(Token[] tokenArray);
 }
 
 /// <summary>
-/// Обратная польская запись. Алгоритм Бауэра-Замельзона
+/// Reverse Polish Notation Calculator using the Bauer-Zamelson algorithm.
 /// </summary>
 public class BzaCalculator : TokenizedCalculator
 {
+    /// <summary>
+    /// Initializes a new instance of the BzaCalculator class.
+    /// </summary>
     public BzaCalculator() : base(new ArithmeticTokenizer()) { }
 
+    // Enum for transition results during parsing
     private enum TransitionResult { TokenStay, NextToken, End }
-    
+
+    /// <inheritdoc/>
     protected override double ProcessTokens(Token[] tokenArray)
+    {
+        var rpnTokenList = ConstructReversePolishNotation(tokenArray);
+        var value = CalculateReversePolishNotation(rpnTokenList);
+        return Math.Round(value);
+    }
+
+    private static List<Token> ConstructReversePolishNotation(Token[] tokenArray)
     {
         Array.Reverse(tokenArray);
         var expressionTokens = new Stack<Token>(tokenArray);
 
         var operatorStack = new Stack<OperatorToken>();
         var rpnTokenList = new List<Token>();
+
+        #region transition table
 
         TransitionResult PushOperatorToStack(OperatorToken token)
         {
@@ -67,8 +103,10 @@ public class BzaCalculator : TokenizedCalculator
                     State.Begin, new Dictionary<State, Func<OperatorToken, TransitionResult>> {
                         { State.WeakOperation, PushOperatorToStack },
                         { State.StrongOperation, PushOperatorToStack },
-                        { State.OpenBracket, PushOperatorToStack },
-                        { State.CloseBracket, token => throw new Exception($"Unexpected closed bracket token ({token})!") },
+                        { State.OpenBracket, PushOperatorToStack }, {
+                            State.CloseBracket,
+                            token => throw new Exception($"Unexpected closed bracket token ({token})!")
+                        },
                         { State.End, _ => TransitionResult.End },
                     }
                 }, {
@@ -98,11 +136,13 @@ public class BzaCalculator : TokenizedCalculator
                 },
             };
 
+        #endregion
+
         var firstToken = expressionTokens.Pop();
         if (firstToken.Type != TokenType.Operator || ((OperatorToken)firstToken).Operator != OperatorType.Begin) {
             throw new Exception($"First token is not Begin! {firstToken}");
         }
-        
+
         operatorStack.Push((OperatorToken)firstToken);
 
         while (true) {
@@ -123,16 +163,15 @@ public class BzaCalculator : TokenizedCalculator
             }
 
             var result = transitions[currentState][nextState](operatorToken);
-            
+
             if (result == TransitionResult.End)
                 break;
-            
+
             if (result == TransitionResult.NextToken)
                 expressionTokens.Pop();
         }
 
-        var value = CalculateReversePolishNotation(rpnTokenList);
-        return Math.Round(value);
+        return rpnTokenList;
     }
 
     private static double CalculateReversePolishNotation(List<Token> rpnTokenList)
@@ -182,7 +221,8 @@ public class BzaCalculator : TokenizedCalculator
                 case OperatorType.OpenBracket:
                 case OperatorType.CloseBracket:
                 default:
-                    throw new Exception($"Can't process operation {operationToken} on operands {operand1} and {operand2}");
+                    throw new Exception(
+                        $"Can't process operation {operationToken} on operands {operand1} and {operand2}");
             }
 
             operandStack.Push((OperandToken)TokenFactory.CreateOperandToken(result));
@@ -206,9 +246,9 @@ internal static class Program
 
         try {
             var result = calculator.Calculate(expression);
-            Console.WriteLine($"Результат: {Math.Round(result)}");
+            Console.WriteLine($"Result: {Math.Round(result)}");
         } catch (Exception ex) {
-            Console.WriteLine($"Ошибка: {ex.Message}");
+            Console.WriteLine($"Error: {ex.Message}");
         }
     }
 }

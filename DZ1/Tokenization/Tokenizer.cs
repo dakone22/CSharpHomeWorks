@@ -1,12 +1,28 @@
 namespace DZ1.Tokenization;
 
+/// <summary>
+/// Represents an interface for tokenizing arithmetic expressions.
+/// </summary>
 public interface ITokenizer
 {
+    /// <summary>
+    /// Tokenizes the given arithmetic expression and returns an array of tokens.
+    /// </summary>
+    /// <param name="expression">The arithmetic expression to tokenize.</param>
+    /// <returns>An array of tokens representing the expression.</returns>
     Token[] Tokenize(string expression);
 }
 
+/// <summary>
+/// A class that implements the ITokenizer interface to tokenize arithmetic expressions.
+/// </summary>
 public class ArithmeticTokenizer : ITokenizer
 {
+    /// <summary>
+    /// Tokenizes the given arithmetic expression and returns an array of tokens.
+    /// </summary>
+    /// <param name="expression">The arithmetic expression to tokenize.</param>
+    /// <returns>An array of tokens representing the expression.</returns>
     public Token[] Tokenize(string expression)
     {
         var tokens = new List<Token> { TokenFactory.CreateBeginToken() };
@@ -45,7 +61,7 @@ public class ArithmeticTokenizer : ITokenizer
                 _ => throw new Exception($"Unknown symbol '{ch}' while parsing string \"{expression}\"")
             });
         }
-        
+            
         tokens.Add(TokenFactory.CreateEndToken());
 
         return tokens.ToArray();
