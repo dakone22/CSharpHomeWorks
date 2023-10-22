@@ -13,32 +13,44 @@ public interface IRequestHandler
     void HandleRequest(NetworkStream stream);
 }
 
+/// <summary>
+/// Менеджер обработки запросов, выбирающий, как обрабатывать запрос.
+/// </summary>
 public class RequestHandlerManager : IRequestHandler
 {
+    /// Список обработчиков запросов.
     private readonly IEnumerable<IRequestProcessor> _requestHandlers; 
+
+    /// <summary>
+    /// Создать экземпляр класса <see cref="RequestHandlerManager"/>.
+    /// </summary>
+    /// <param name="requestHandlers">Количество обработчиков запросов.</param>
     public RequestHandlerManager(IEnumerable<IRequestProcessor> requestHandlers)
     {
         _requestHandlers = new List<IRequestProcessor>(requestHandlers);
     }
-    
+
+    /// <summary>
+    /// Основной метод обработки запросов
+    /// </summary>
+    /// <param name="stream">Сетевой поток для чтения/записи.</param>
     public void HandleRequest(NetworkStream stream)
     {
         var request = ReadMessage(stream);
-        
-        foreach (var handler in _requestHandlers) {
+        foreach (var handler in _requestHandlers) 
+        { 
             if (!handler.ShouldHandleRequest(request)) continue;
-            
             var response = handler.ProcessRequest(request);
             WriteMessage(stream, response);
             return;
         }
-        
         WriteMessage(stream, HttpResponses.InternalServerErrorResponse("Unknown request"));
     }
 
     /// <summary>
-    /// Читает сообщение из потока (stream) и возвращает его в виде строки.
+    /// Чтение сообщения из потока.
     /// </summary>
+    /// <param name="stream">Сетевой поток для чтения.</param>
     private static string ReadMessage(Stream stream)
     {
         var request = new byte[1024];
@@ -47,8 +59,10 @@ public class RequestHandlerManager : IRequestHandler
     }
 
     /// <summary>
-    /// Пишет сообщение в поток (stream).
+    /// Запись сообщения в поток.
     /// </summary>
+    /// <param name="stream">Сетевой поток для записи.</param>
+    /// <param name="message">Сообщение для записи.</param>
     private static void WriteMessage(Stream stream, string message)
     {
         var buffer = Encoding.UTF8.GetBytes(message);
@@ -57,18 +71,37 @@ public class RequestHandlerManager : IRequestHandler
     }
 }
 
+/// <summary>
+/// Интерфейс для обработчиков запросов.
+/// </summary>
 public interface IRequestProcessor
 {
+    /// <summary>
+    /// Метод определяет, должен ли обработчик обрабатывать данный запрос или нет.
+    /// </summary>
+    /// <param name="request">Запрос, который необходимо проверить.</param>
+    /// <returns>Возвращает true, если обработчик должен обработать запрос, иначе false.</returns>
     bool ShouldHandleRequest(string request);
+    
+    /// <summary>
+    /// Создает HTTP ответ на основе файла, запрошенного в запросе.
+    /// </summary>
+    /// <param name="requestedFile">Запрашиваемый файл.</param>
+    /// <returns>Возвращает HTTP ответ в виде строки.</returns>
     string ProcessRequest(string request);
 }
 
+/// <summary>
+/// Обработчик запросов для статических файлов. Производит обработку запросов на получение статических файлов.
+/// </summary>
 public class StaticFileRequestProcessor : IRequestProcessor
 {
+    /// Путь к ресурсам на сервере.
     private readonly string? _resourcePath = new ConfigurationBuilder()
         .AddUserSecrets<StaticFileRequestProcessor>()
         .Build()["resource_path"];
 
+    /// Список поддерживаемых расширений файлов. 
     private readonly string[] _extensions = {
         ".html",
         // ".css",
@@ -77,7 +110,7 @@ public class StaticFileRequestProcessor : IRequestProcessor
         // ".png",
         // ".ico",
     };
-
+    
     public bool ShouldHandleRequest(string request) => _extensions.Any(request.Split(" ")[1].Contains);
 
     public string ProcessRequest(string request)
@@ -89,6 +122,11 @@ public class StaticFileRequestProcessor : IRequestProcessor
         return ConstructHttpResponse(requestedFile);
     }
 
+    /// <summary>
+    /// Создает HTTP ответ на основе файла, запрошенного в запросе.
+    /// </summary>
+    /// <param name="requestedFile">Запрашиваемый файл.</param>
+    /// <returns>Возвращает HTTP ответ в виде строки.</returns>
     private string ConstructHttpResponse(string requestedFile)
     {
         try {
@@ -100,6 +138,11 @@ public class StaticFileRequestProcessor : IRequestProcessor
         }
     }
 
+    /// <summary>
+    /// Разбор HTTP запроса на составные части.
+    /// </summary>
+    /// <param name="message">HTTP запрос в виде строки.</param>
+    /// <returns>Возвращает имя запрашиваемого файла, если он присутствовал в запросе.</returns>
     private static string ParseHttpRequest(string message)
     {
         var requestLines = message.Split(' ');
@@ -107,8 +150,12 @@ public class StaticFileRequestProcessor : IRequestProcessor
     }
 }
 
+/// <summary>
+/// Обработчик AJAX запросов на вычисление выражений.
+/// </summary>
 public class AjaxRequestProcessor : IRequestProcessor
 {
+    /// Объект калькулятора, осуществляющего вычисление выражений.
     private readonly ICalculator _calculator = new BzaCalculator();
     
     public bool ShouldHandleRequest(string request) => request.Split(" ")[1].Contains("calculate");
@@ -123,6 +170,11 @@ public class AjaxRequestProcessor : IRequestProcessor
         return response;
     }
 
+    /// <summary>
+    /// Обрабатывает полезную нагрузку (payload) AJAX запроса и генерирует HTTP ответ.
+    /// </summary>
+    /// <param name="requestPayload">Полезная нагрузка запроса.</param>
+    /// <returns>Возвращает HTTP ответ в виде строки.</returns>
     private string ProcessRequestPayload(string requestPayload)
     {
         if (string.IsNullOrEmpty(requestPayload))
@@ -142,6 +194,11 @@ public class AjaxRequestProcessor : IRequestProcessor
         }
     }
 
+    /// <summary>
+    /// Разбор HTTP запроса на и извлечение полезной нагрузки.
+    /// </summary>
+    /// <param name="message">HTTP запрос в виде строки.</param>
+    /// <returns>Возвращает строку содержащую полезную нагрузку запроса.</returns>
     private static string ParseHttpRequestPayload(string message)
     {
         return message[(message.IndexOf("\r\n\r\n", StringComparison.Ordinal) + 4)..];
