@@ -1,0 +1,36 @@
+﻿<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <title>Calculate</title>
+    </head>
+    <body>
+        <label for="expression"></label><input type="text" id="expression" placeholder="Введите арифметическое выражение" />
+        <button onclick="calculate()">Посчитать</button>
+        <p id="result"></p>
+        
+        <script>
+            function calculate() {
+                const expression = document.querySelector('#expression').value;
+        
+                fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 'expression' : expression }),
+                })
+                    .then(response => {
+                        if (!response.ok) { throw new Error(response.statusText); }
+                        return response.json();
+                    })
+                    .then(data => {
+                        document.querySelector('#result').textContent = 'Результат: ' + data.result;
+                    })
+                    .catch(error => {
+                        document.querySelector('#result').textContent = 'Ошибка: ' + error.message;
+                    });
+            }
+        </script>
+    </body>
+</html>
