@@ -185,7 +185,7 @@ public class AjaxRequestProcessor : IRequestProcessor
 
         try {
             var result = _calculator.Calculate(expression);
-            var jsonResult = JsonSerializer.Serialize(new {result = result});
+            var jsonResult = JsonSerializer.Serialize(new {result});
             return HttpResponses.OkResponse(jsonResult);
 
         } catch (Exception ex) {
